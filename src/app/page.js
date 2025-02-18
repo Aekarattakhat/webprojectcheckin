@@ -1,24 +1,32 @@
 'use client'
 import { useState } from 'react';
-import { LoginComponent } from '@/components/login';
+import  LoginComponent  from '@/components/login';
+import  ShowProfileUserComponent  from '@/components/showProfileuser';
+import ShowClassComponent from '@/components/showClass';
+import AddClassModal from "./modal/addClass";
 
 export default function Home() {
-  const stateInit = {
+
+  const [state, setState] = useState({
     user: null,
-    classes: [],
     showAddClassModal: false,
     newClassName: "",
     image: null,
     url: "",
     progress: 0,
-  };
+  });
 
-  const [state, setState] = useState(stateInit);
+  const [classes,setClasses] = useState(null)
 
   return (
     <div>
-      <LoginComponent user={state.user} setState={setState}/>
-    
+      <LoginComponent state={state} setState={setState} setClasses={setClasses}/>
+      
+      {state.user && 
+      <ShowProfileUserComponent state={state} setState={setState}/>}
+
+      {classes && 
+      <ShowClassComponent classes={classes} />}
     </div>
   );
 }

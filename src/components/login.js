@@ -1,73 +1,66 @@
 import { auth, db } from "@/config";
 import { GoogleAuthProvider,signInWithPopup } from "firebase/auth";
+import { doc, getDoc, setDoc, serverTimestamp,collection, query, where,onSnapshot } from "firebase/firestore";
 import React from 'react';
 
 
-const LoginComponent = ({user, setState}) => {
-    const componentDidMount = () => {
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                setState({ user: user.toJSON() });
-                fetchClasss(user.uid);
-            } else {
-                setState({ user: null, classes: [] });
-            }
-        });
-    }
-
+const LoginComponent = ({state, setState,setClasses}) => {
     const fetchClasss = (userId) => {
-        db.collection("classroom")
-            .where("owner", "==", userId)
-            .onSnapshot((snapshot) => {
-                const classes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                setState({ classes });
-            });
-    }
+        const classRef = collection(db, "classroom");
+        const q = query(classRef, where("owner", "==", userId));
+    
+        onSnapshot(q, (snapshot) => {
+            const classroom = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            console.log(classroom,"fgfffffffffffffff")
+            setClasses(classroom);
+        }); 
+    };
 
     const google_login = () => {
-        var provider = new GoogleAuthProvider();
+        const provider = new GoogleAuthProvider();
         provider.addScope("profile");
         provider.addScope("email");
-        signInWithPopup(auth,provider)
+    
+        signInWithPopup(auth, provider)
             .then((result) => {
                 const user = result.user;
-
+    
                 if (user) {
-                    const userRef = db.collection("user").doc(user.uid);
-
-                    userRef.get().then((doc) => {
-                        if (!doc.exists) {
-                            userRef.set({
-                                uid: user.uid,
-                                name: user.displayName,
-                                email: user.email,
-                                photoURL: user.photoURL,
-                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                            });
-                        }
-
-                        setState({ user: user.toJSON() });
-                        fetchClasss(user.uid);
-                    }).catch((error) => {
-                        console.error("Error checking user by UID:", error);
-                    });
+                    const userRef = doc(db, "user", user.uid);
+    
+                    getDoc(userRef)
+                        .then((docSnapshot) => {
+                            if (!docSnapshot.exists()) {
+                                setDoc(userRef, {
+                                    uid: user.uid,
+                                    name: user.displayName,
+                                    email: user.email,
+                                    photoURL: user.photoURL,
+                                    createdAt: serverTimestamp()
+                                });
+                            }
+                            fetchClasss(user.uid)
+                            setState({...state, user: user.toJSON() });
+                        })
+                        .catch((error) => {
+                            console.error("Error checking user by UID:", error);
+                        });
                 }
             })
             .catch((error) => {
                 console.error("Error logging in:", error);
             });
-    }
+    };
 
     const google_logout = () => {
         if (confirm("Are you sure?")) {
             auth.signOut().then(() => {
-                setState({ user: null, classes: [] });
+                setState({...state, user: null, classes: null});
             });
         }
     }
 
-    console.log(setState)
-    if (!user) {
+    if (!state.user) {
         return <button onClick={() => google_login()}>Login</button>;
     } else {
         return (
@@ -78,4 +71,4 @@ const LoginComponent = ({user, setState}) => {
     }
 }
 
-export {LoginComponent}
+export default LoginComponent
