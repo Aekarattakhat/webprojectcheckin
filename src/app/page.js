@@ -3,6 +3,7 @@ import { useState } from 'react';
 import  LoginComponent  from '@/components/login';
 import  ShowProfileUserComponent  from '@/components/showProfileuser';
 import ShowClassComponent from '@/components/showClass';
+import QAModal from '@/components/modal/qandA';
 
 
 export default function Home() {
@@ -27,7 +28,7 @@ export default function Home() {
       {classes && 
       <ShowClassComponent classes={classes} user={state.user}/>}
 
-      
+      <QAModal showQAModal={false}/>
     </div>
   );
 }
