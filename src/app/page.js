@@ -28,7 +28,7 @@ export default function Home() {
       {classes && 
       <ShowClassComponent classes={classes} user={state.user}/>}
 
-      <QAModal showQAModal={false}/>
+      <QAModal showQAModal={true}/>
     </div>
   );
 }
