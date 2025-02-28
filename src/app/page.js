@@ -4,6 +4,8 @@ import  LoginComponent  from '@/components/login';
 import  ShowProfileUserComponent  from '@/components/showProfileuser';
 import ShowClassComponent from '@/components/showClass';
 import ShowcheckinModal from '@/components/modal/showcheckin';
+import QAModal from '@/components/modal/qandA';
+
 
 export default function Home() {
   
@@ -34,6 +36,7 @@ export default function Home() {
 
       {/* Showcheckin Modal */}
       <ShowcheckinModal ShowcheckinModal={showCheckin} setShowcheckinModal={setShowCheckin} />
+      <QAModal showQAModal={false}/>
     </div>
   );
 }
