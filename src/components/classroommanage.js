@@ -3,13 +3,15 @@ import React, { useState, useEffect } from 'react';
 import { db } from "@/config";
 import { collection, getDocs, addDoc, setDoc, doc, query, where,getDoc } from 'firebase/firestore';
 import { QRCodeCanvas } from 'qrcode.react';
+import ShowcheckinModal from '@/components/modal/showcheckin';
+
 
 const ClassroomManagement = ({ cid, onClose }) => {
   const [course, setCourse] = useState(null);
   const [students, setStudents] = useState([]);
   const [checkinHistory, setCheckinHistory] = useState([]);
   const [showQRCode, setShowQRCode] = useState(false); // State ใหม่สำหรับควบคุมการแสดง QR Code
-
+  const [showCheckin, setShowCheckin] = useState(false);
   useEffect(() => {
     const fetchCourse = async () => {
       const courseRef = doc(db, 'classroom', cid);
@@ -123,7 +125,10 @@ const ClassroomManagement = ({ cid, onClose }) => {
         </table>
       )}
 
-      <button onClick={addCheckin} className="bg-purple-500 text-white px-4 py-2 rounded-lg mt-4 hover:bg-purple-600">
+      <button 
+        onClick={() => setShowCheckin(true)} 
+        className="bg-purple-500 text-white p-2 rounded-lg mt-4"
+      >
         Add Check-in
       </button>
 
@@ -135,6 +140,11 @@ const ClassroomManagement = ({ cid, onClose }) => {
           </li>
         ))}
       </ul>
+      <ShowcheckinModal 
+  ShowcheckinModal={showCheckin} 
+  setShowcheckinModal={setShowCheckin} 
+  course={course} 
+/>
     </div>
   );
 };
