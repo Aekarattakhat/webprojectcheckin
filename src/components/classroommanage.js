@@ -1,17 +1,15 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { db } from "@/config";
-import { collection, getDocs, addDoc, setDoc, doc, getDoc } from 'firebase/firestore';
+import { db } from '@/config';
+import { collection, getDocs, addDoc, setDoc, doc, query, where, getDoc, runTransaction } from 'firebase/firestore';
 import { QRCodeCanvas } from 'qrcode.react';
-import ShowcheckinModal from '@/components/modal/showcheckin';
-
 
 const ClassroomManagement = ({ cid, onClose }) => {
   const [course, setCourse] = useState(null);
   const [students, setStudents] = useState([]);
   const [checkinHistory, setCheckinHistory] = useState([]);
-  const [showQRCode, setShowQRCode] = useState(false); // State ใหม่สำหรับควบคุมการแสดง QR Code
-  const [showCheckin, setShowCheckin] = useState(false);
+  const [showQRCode, setShowQRCode] = useState(false);
+
   useEffect(() => {
     const fetchCourse = async () => {
       const courseRef = doc(db, 'classroom', cid);
@@ -22,37 +20,54 @@ const ClassroomManagement = ({ cid, onClose }) => {
         console.log("No such course!");
       }
     };
+
+    const fetchCheckinCount = async () => {
+      const counterRef = doc(db, `classroom/${cid}/checkinCounter`, 'counter');
+      const counterSnap = await getDoc(counterRef);
+      const count = counterSnap.exists() ? counterSnap.data().count || 0 : 0;
+      // ไม่ต้องตั้งค่า checkinNumber ใน state เพราะใช้ Firestore ในการจัดการ
+    };
+
     fetchCourse();
+    fetchCheckinCount();
   }, [cid]);
 
   const fetchStudents = async () => {
-    const studentsRef = collection(db, `classroom/${cid}/students`);
-    const querySnapshot = await getDocs(studentsRef);
-    const studentsList = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      name: doc.data().name,
-      status: doc.data().status || '0',
-      stdid: doc.data().stdid
-    }));
-    setStudents(studentsList);
+    try {
+      const studentsRef = collection(db, `classroom/${cid}/students`);
+      const querySnapshot = await getDocs(studentsRef);
+      const studentsList = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        name: doc.data().name,
+        status: doc.data().status || '0',
+        stdid: doc.data().stdid
+      }));
+      setStudents(studentsList);
+    } catch (error) {
+      console.error("Error fetching students:", error);
+    }
   };
 
   const fetchCheckinHistory = async () => {
-    const checkinsRef = collection(db, `classroom/${cid}/checkin`);
-    const querySnapshot = await getDocs(checkinsRef);
-    const historyList = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      code: doc.data().code,
-      date: doc.data().date,
-      time: doc.data().time
-    }));
-    setCheckinHistory(historyList);
+    try {
+      const checkinsRef = collection(db, `classroom/${cid}/checkin`);
+      const querySnapshot = await getDocs(checkinsRef);
+      const historyList = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        code: doc.data().code,
+        date: doc.data().date,
+        time: doc.data().time
+      }));
+      setCheckinHistory(historyList);
+    } catch (error) {
+      console.error("Error fetching check-in history:", error);
+    }
   };
 
   const generateQRCode = () => {
     return (
       <QRCodeCanvas
-        value={cid}
+        value={cid} 
         size={128}
         className="inline-block"
       />
@@ -60,32 +75,54 @@ const ClassroomManagement = ({ cid, onClose }) => {
   };
 
   const addCheckin = async () => {
-    const cno = new Date().toISOString().split('T')[0] + '-' + Date.now();
-    setCurrentCheckinId(cno); // บันทึก Check-in ID ปัจจุบัน
-    const checkinRef = doc(db, `classroom/${cid}/checkin`, cno);
-    const currentDate = new Date();
-    await setDoc(checkinRef, {
-      code: course?.info?.code || 'ABC123',
-      date: currentDate.toISOString().split('T')[0],
-      time: currentDate.toISOString()
-    });
+    try {
+      const newCheckinNumber = await runTransaction(db, async (transaction) => {
+        const counterRef = doc(db, `classroom/${cid}/checkinCounter`, 'counter');
+        const counterDoc = await transaction.get(counterRef);
 
-    const scoresRef = collection(db, `classroom/${cid}/checkin/${cno}/scores`);
-    students.forEach(async (student) => {
-      await addDoc(scoresRef, {
-        uid: student.stdid,
-        name: student.name,
-        status: '0',
-        date: currentDate.toISOString()
+        let count = 1;
+        if (counterDoc.exists()) {
+          count = (counterDoc.data().count || 0) + 1;
+        }
+
+        transaction.set(counterRef, {
+          count: count
+        }, { merge: true });
+
+        return count;
       });
-    });
 
-    fetchCheckinHistory();
+      const cno = `CHECKIN_${newCheckinNumber}`;
+      const checkinDocRef = doc(db, `classroom/${cid}/checkin`, cno);
+      const currentDate = new Date();
+      await setDoc(checkinDocRef, {
+        code: course?.info?.code || 'ABC123',
+        date: currentDate.toISOString().split('T')[0],
+        time: currentDate.toISOString()
+      });
+
+      const scoresRef = collection(db, `classroom/${cid}/checkin/${cno}/scores`);
+      const batchPromises = students.map(student =>
+        addDoc(scoresRef, {
+          uid: student.stdid,
+          name: student.name,
+          status: '0',
+          date: currentDate.toISOString()
+        })
+      );
+      await Promise.all(batchPromises);
+
+      fetchCheckinHistory();
+    } catch (error) {
+      console.error("Error adding check-in:", error);
+    }
   };
+
+  if (!course) return <div>Loading...</div>;
 
   return (
     <div className="classroom-management p-4 bg-gray-100 rounded-lg shadow-md" style={{ backgroundImage: `url(${course?.info?.backgroundImage || 'none'})` }}>
-      <h2 className="text-2xl font-bold mb-4">{course?.info?.name || 'Unnamed Course'} (CID: {course?.id})</h2>
+      <h2 className="text-2xl font-bold mb-4">{course.info?.name || 'Unnamed Course'} (CID: {course.id})</h2>
       <button onClick={onClose} className="bg-red-500 text-white px-4 py-2 rounded-lg mb-4 hover:bg-red-600">
         Close
       </button>
@@ -124,18 +161,8 @@ const ClassroomManagement = ({ cid, onClose }) => {
         </table>
       )}
 
-      <button 
-        onClick={() => setShowCheckin(true)} 
-        className="bg-purple-500 text-white p-2 rounded-lg mt-4"
-      >
+      <button onClick={addCheckin} className="bg-purple-500 text-white px-4 py-2 rounded-lg mt-4 hover:bg-purple-600">
         Add Check-in
-      </button>
-
-      <button 
-        onClick={() => setShowQAModal(true)} 
-        className="bg-yellow-500 text-white px-4 py-2 rounded-lg mt-4 hover:bg-yellow-600"
-      >
-        Ask Question
       </button>
 
       <h3 className="text-xl font-semibold mt-6">Check-in History</h3>
@@ -146,11 +173,6 @@ const ClassroomManagement = ({ cid, onClose }) => {
           </li>
         ))}
       </ul>
-      <ShowcheckinModal 
-  ShowcheckinModal={showCheckin} 
-  setShowcheckinModal={setShowCheckin} 
-  course={course} 
-/>
     </div>
   );
 };
