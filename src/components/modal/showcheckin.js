@@ -1,10 +1,10 @@
 //หน้าจอเช็คชื่อ
 //เป็น modal เอาไปใส่ใน classroom mange compoent
 //ลิ้งกับปุ่ม เพื่มการเช็คชื่อของ classroom mange
-import React, { useState, useEffect } from "react";
-import Modal from "react-modal";
 import { db } from "@/config";
-import { getDocs, collection, doc, updateDoc } from "firebase/firestore";
+import { collection, doc, getDocs, updateDoc } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import Modal from "react-modal";
 
 const ShowcheckinModal = ({ ShowcheckinModal, setShowcheckinModal }) => {
   const [classroom, setClassroom] = useState(null);
@@ -80,7 +80,7 @@ const ShowcheckinModal = ({ ShowcheckinModal, setShowcheckinModal }) => {
                 type="text"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="bg-white-500 text-white py-2 px-4 rounded-lg"
+                className="bg-white-500 text-black py-2 px-4 rounded-lg"
                 placeholder="Enter new password"
               />
 
