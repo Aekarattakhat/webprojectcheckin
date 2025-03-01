@@ -46,17 +46,6 @@ export default function Home() {
       {/* ปุ่มเปิด Modal (ยังคงไว้สำหรับการเช็คชื่อทั่วไป) */}
 
       {/* ปุ่มเปิด Modal */}
-      <button 
-        onClick={() => setShowCheckin(true)} 
-        className="bg-green-500 text-white p-2 rounded-lg mt-4"
-      >
-        Add Check-in
-      </button>
-
-      <QAModal showQAModal={true}/>
-      {/* Showcheckin Modal */}
-      <ShowcheckinModal ShowcheckinModal={showCheckin} setShowcheckinModal={setShowCheckin} />
-      <QAModal showQAModal={false}/>
     </div>
   );
 }

@@ -1,14 +1,17 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { db } from "@/config";
-import { collection, getDocs, addDoc, setDoc, doc, query, where,getDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, setDoc, doc, getDoc } from 'firebase/firestore';
 import { QRCodeCanvas } from 'qrcode.react';
+import QAModal from './modal/qandA'; // Import QAModal
 
 const ClassroomManagement = ({ cid, onClose }) => {
   const [course, setCourse] = useState(null);
   const [students, setStudents] = useState([]);
   const [checkinHistory, setCheckinHistory] = useState([]);
-  const [showQRCode, setShowQRCode] = useState(false); // State ใหม่สำหรับควบคุมการแสดง QR Code
+  const [showQRCode, setShowQRCode] = useState(false);
+  const [showQAModal, setShowQAModal] = useState(false); // เพิ่ม State สำหรับ QAModal
+  const [currentCheckinId, setCurrentCheckinId] = useState(null); // บันทึก ID เช็คชื่อปัจจุบัน
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -59,6 +62,7 @@ const ClassroomManagement = ({ cid, onClose }) => {
 
   const addCheckin = async () => {
     const cno = new Date().toISOString().split('T')[0] + '-' + Date.now();
+    setCurrentCheckinId(cno); // บันทึก Check-in ID ปัจจุบัน
     const checkinRef = doc(db, `classroom/${cid}/checkin`, cno);
     const currentDate = new Date();
     await setDoc(checkinRef, {
@@ -80,22 +84,20 @@ const ClassroomManagement = ({ cid, onClose }) => {
     fetchCheckinHistory();
   };
 
-  if (!course) return <div>Loading...</div>;
-
   return (
     <div className="classroom-management p-4 bg-gray-100 rounded-lg shadow-md" style={{ backgroundImage: `url(${course?.info?.backgroundImage || 'none'})` }}>
-      <h2 className="text-2xl font-bold mb-4">{course.info?.name || 'Unnamed Course'} (CID: {course.id})</h2>
+      <h2 className="text-2xl font-bold mb-4">{course?.info?.name || 'Unnamed Course'} (CID: {course?.id})</h2>
       <button onClick={onClose} className="bg-red-500 text-white px-4 py-2 rounded-lg mb-4 hover:bg-red-600">
         Close
       </button>
 
       <button 
-        onClick={() => setShowQRCode(true)} // เปลี่ยนสถานะเมื่อกดปุ่ม
+        onClick={() => setShowQRCode(true)}
         className="bg-blue-500 text-white px-4 py-2 rounded-lg mr-2 hover:bg-blue-600"
       >
         Show QR Code
       </button>
-      {showQRCode && generateQRCode()} {/* แสดง QR Code เฉพาะเมื่อ showQRCode เป็น true */}
+      {showQRCode && generateQRCode()}
 
       <button onClick={fetchStudents} className="bg-green-500 text-white px-4 py-2 rounded-lg mt-4 hover:bg-green-600">
         Show Students List
@@ -127,6 +129,13 @@ const ClassroomManagement = ({ cid, onClose }) => {
         Add Check-in
       </button>
 
+      <button 
+        onClick={() => setShowQAModal(true)} 
+        className="bg-yellow-500 text-white px-4 py-2 rounded-lg mt-4 hover:bg-yellow-600"
+      >
+        Ask Question
+      </button>
+
       <h3 className="text-xl font-semibold mt-6">Check-in History</h3>
       <ul className="mt-2 list-disc pl-5">
         {checkinHistory.map((checkin, index) => (
@@ -135,6 +144,16 @@ const ClassroomManagement = ({ cid, onClose }) => {
           </li>
         ))}
       </ul>
+
+      {/* แสดง QAModal */}
+      {showQAModal && (
+        <QAModal 
+          showQAModal={showQAModal} 
+          setShowQAModal={setShowQAModal} 
+          cid={cid} 
+          cno={currentCheckinId} 
+        />
+      )}
     </div>
   );
 };

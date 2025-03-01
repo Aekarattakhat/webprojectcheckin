@@ -27,7 +27,7 @@ const QAModal = ({ showQAModal, setShowQAModal, cid, cno }) => {
     }, [showQAModal, loading, formData.question_no]); // Added formData.question_no to dependencies
 
     const startListening = async () => {
-        const QARef = doc(db, "classroom", "1");
+        const QARef = doc(db, "classroom", cid);
 
         // Check if the question exists, if not, create it
         unsubscribeRef.current = onSnapshot(QARef, async (snapshot) => {
