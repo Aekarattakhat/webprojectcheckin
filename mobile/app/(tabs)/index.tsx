@@ -1,37 +1,27 @@
-import { Image, StyleSheet, Platform } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import {db,auth} from "../cofig";
-import { collection, onSnapshot,getDocs } from 'firebase/firestore';
+import { View, TextInput, Button, Text, Alert } from "react-native";
 import LoginScreen from "../components/login";
+import ShowProfileUserComponent from "../components/showProfileUser";
+import ShowClassComponent from "../components/showClass"
+import { useState } from "react";
 
 export default function HomeScreen() {
+  const [user,setUser] = useState(null);
 
 
   
   return (
-    <LoginScreen/>
+    <View>
+      <LoginScreen userData={user} setUserData={setUser}/>
+
+      {user && 
+        <ShowProfileUserComponent user={user}/>
+      }
+      {user && 
+        <ShowClassComponent user={user}/>
+      }
+    </View>
+
+
   );
 }
 
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});

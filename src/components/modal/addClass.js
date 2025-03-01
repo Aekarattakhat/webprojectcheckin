@@ -4,7 +4,7 @@ import { db } from "@/config";
 import { addDoc, collection} from "firebase/firestore";
 
 
-const AddClassModal = ({ showAddClassModal, setShowAddClassModa, user}) => {
+const AddClassModal = ({ showAddClassModal, setShowAddClassModal, user}) => {
     const [formData, setFormData] = useState({
         code: "",
         name: "",
@@ -31,7 +31,7 @@ const AddClassModal = ({ showAddClassModal, setShowAddClassModa, user}) => {
         }));
       };
 
-    const closeModal = () =>{setShowAddClassModa(false)}
+    const closeModal = () =>{setShowAddClassModal(false)}
 
     return (
         <Modal isOpen={showAddClassModal}  ariaHideApp={false}>
