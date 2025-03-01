@@ -46,6 +46,7 @@ export default function Home() {
       {/* ปุ่มเปิด Modal (ยังคงไว้สำหรับการเช็คชื่อทั่วไป) */}
       
 
+      <QAModal showQAModal={true}/>
       {/* Showcheckin Modal */}
       <ShowcheckinModal ShowcheckinModal={showCheckin} setShowcheckinModal={setShowCheckin} />
       <QAModal showQAModal={false}/>
