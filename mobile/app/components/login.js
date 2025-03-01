@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { View, TextInput, Button, Text, Alert } from "react-native";
 import { login, logout, signUp } from "../authService";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "@/app/cofig";
 
 const LoginScreen = ({userData,setUserData}) => {
   const [email, setEmail] = useState("");
@@ -12,8 +14,10 @@ const LoginScreen = ({userData,setUserData}) => {
   const handleLogin = async () => {
     try {
       const user = await login(email, password);
-      setUserData(user)
-      console.log(user)
+      onSnapshot(doc(db, "user", user.uid), (doc) => {
+        setUserData(doc.data());
+      });
+    
     } catch (error) {
       Alert.alert("Login Failed", error.message);
     }
@@ -22,8 +26,10 @@ const LoginScreen = ({userData,setUserData}) => {
   const handleSignUp = async () => {
     try {
       const user = await signUp(email, password, studentId, name);
-      setUserData(user)
-      console.log(user)
+      onSnapshot(doc(db, "user", user.uid), (doc) => {
+        setUserData(doc.data());
+      });
+      
     } catch (error) {
       Alert.alert("Signup Failed", error.message);
     }
