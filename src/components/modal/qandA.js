@@ -33,7 +33,7 @@ const QAModal = ({ showQAModal, setShowQAModal, cid, cno }) => {
         unsubscribeRef.current = onSnapshot(QARef, async (snapshot) => {
             if (snapshot.exists()) {
                 const data = snapshot.data();
-                const answers = data?.checkin?.["1"]?.answers || {};
+                const answers = data?.checkin?.[cno]?.answers || {};
 
                 // If the question number doesn't exist, initialize it
                 if (!answers[formData.question_no]) {
@@ -41,7 +41,7 @@ const QAModal = ({ showQAModal, setShowQAModal, cid, cno }) => {
                         QARef,
                         {
                             checkin: {
-                                "1": {
+                                [cno]: {
                                     answers: {
                                         [formData.question_no]: {
                                             students: {},
@@ -56,7 +56,7 @@ const QAModal = ({ showQAModal, setShowQAModal, cid, cno }) => {
                 }
 
                 const studentsData =
-                    data?.checkin?.["1"]?.answers?.[formData.question_no]?.students || {};
+                    data?.checkin?.[cno]?.answers?.[formData.question_no]?.students || {};
                 const sortedData = Object.entries(studentsData)
                     .map(([studentId, studentInfo]) => ({
                         studentId,
@@ -71,7 +71,7 @@ const QAModal = ({ showQAModal, setShowQAModal, cid, cno }) => {
                     QARef,
                     {
                         checkin: {
-                            "1": {
+                            [cno]: {
                                 answers: {
                                     [formData.question_no]: {
                                         students: {},

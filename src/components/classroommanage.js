@@ -130,14 +130,7 @@ const ClassroomManagement = ({ cid, onClose }) => {
       >
         Add Check-in
       </button>
-
-      <button 
-        onClick={() => setShowQAModal(true)} 
-        className="bg-yellow-500 text-white px-4 py-2 rounded-lg mt-4 hover:bg-yellow-600"
-      >
-        Ask Question
-      </button>
-
+      
       <h3 className="text-xl font-semibold mt-6">Check-in History</h3>
       <ul className="mt-2 list-disc pl-5">
         {checkinHistory.map((checkin, index) => (
