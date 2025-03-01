@@ -2,16 +2,18 @@ import React, { useState, useEffect } from "react";
 import Modal from "react-modal";
 import { db } from "@/config";
 import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
+import QAModal from "./qandA";
 
 const ShowcheckinModal = ({ ShowcheckinModal, setShowcheckinModal, course }) => {
   const [students, setStudents] = useState([]);
   const [showStudents, setShowStudents] = useState(false);
   const [password, setPassword] = useState("");
   const [updateMessage, setUpdateMessage] = useState("");
+  const [showQAModal, setShowQAModal] = useState(false); 
 
   useEffect(() => {
     const fetchStudents = async () => {
-      if (!course) return; // ป้องกัน error ถ้ายังไม่มีข้อมูล course
+      if (!course) return; 
       const studentsRef = collection(db, `classroom/${course.id}/students`);
       const snapshot = await getDocs(studentsRef);
       const studentsList = snapshot.docs.map(doc => ({
@@ -30,9 +32,7 @@ const ShowcheckinModal = ({ ShowcheckinModal, setShowcheckinModal, course }) => 
 
   const handleApplyPassword = async () => {
     if (!course) return;
-
     const classroomRef = doc(db, "classroom", course.id);
-
     try {
       await updateDoc(classroomRef, { "info.password": password });
       setUpdateMessage("Password updated successfully!");
@@ -79,14 +79,12 @@ const ShowcheckinModal = ({ ShowcheckinModal, setShowcheckinModal, course }) => 
                 className="bg-white-500 text-black py-2 px-4 rounded-lg"
                 placeholder="Enter new password"
               />
-
               <button
                 onClick={handleApplyPassword}
                 className="bg-green-500 text-white py-2 px-4 rounded-lg ml-2"
               >
                 Apply
               </button>
-
               {updateMessage && <p className="text-sm text-yellow-300 mt-2">{updateMessage}</p>}
             </div>
 
@@ -96,6 +94,14 @@ const ShowcheckinModal = ({ ShowcheckinModal, setShowcheckinModal, course }) => 
               className="bg-yellow-500 text-white py-2 px-4 rounded-lg mt-4"
             >
               {showStudents ? "Hide Students" : "Show Students"}
+            </button>
+
+            {/* ปุ่มเปิด QAModal */}
+            <button 
+              onClick={() => setShowQAModal(true)} 
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg mt-4 hover:bg-blue-600"
+            >
+              Ask Question
             </button>
 
             {/* รายชื่อนักเรียน */}
@@ -124,6 +130,16 @@ const ShowcheckinModal = ({ ShowcheckinModal, setShowcheckinModal, course }) => 
           Close
         </button>
       </div>
+
+      {/* แสดง QAModal */}
+      {showQAModal && (
+        <QAModal 
+          showQAModal={showQAModal} 
+          setShowQAModal={setShowQAModal} 
+          cid={course.id} 
+          cno={"current-checkin-id"} 
+        />
+      )}
     </Modal>
   );
 };

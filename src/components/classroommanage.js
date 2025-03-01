@@ -164,6 +164,7 @@ const ClassroomManagement = ({ cid, onClose }) => {
       <button onClick={addCheckin} className="bg-purple-500 text-white px-4 py-2 rounded-lg mt-4 hover:bg-purple-600">
         Add Check-in
       </button>
+      
 
       <h3 className="text-xl font-semibold mt-6">Check-in History</h3>
       <ul className="mt-2 list-disc pl-5">
