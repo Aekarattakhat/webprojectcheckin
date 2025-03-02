@@ -62,7 +62,7 @@ const ShowClassComponent = ({ classes, setClasses, user, onManageClass }) => {
       <AddClassModal
         showAddClassModal={showAddClassModal}
         setShowAddClassModal={setShowAddClassModal}
-        user={user.uid}
+        user={user?.uid ?? ""}
       />
     </div>
   );

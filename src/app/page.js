@@ -30,7 +30,7 @@ export default function Home() {
       <LoginComponent state={state} setState={setState} setClasses={setClasses} />
       
       {state.user && <ShowProfileUserComponent state={state} setState={setState} />}
-      {classes && (
+      {classes && state.user && (
         <ShowClassComponent 
           classes={classes} 
           user={state.user} 

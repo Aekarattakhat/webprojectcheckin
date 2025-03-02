@@ -34,14 +34,17 @@ const ClassroomManagement = ({ cid, onClose }) => {
 
   const fetchStudents = async () => {
     try {
-      const studentsRef = collection(db, `classroom/${cid}/students`);
-      const querySnapshot = await getDocs(studentsRef);
-      const studentsList = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        name: doc.data().name,
-        status: doc.data().status || '0',
-        stdid: doc.data().stdid
+      const studentsRef = doc(db, `classroom`,`${cid}`);
+      const querySnapshot = await getDoc(studentsRef);
+      console.log(querySnapshot.data()["students"])
+      console.log(querySnapshot.data())
+      const studentsList = Object.entries(querySnapshot.data()["students"]).map(([key, student]) => ({
+        id: key,
+        name: student.name,
+        status: student.status || '0',
+        stdid: student.stdid
       }));
+
       setStudents(studentsList);
     } catch (error) {
       console.error("Error fetching students:", error);
