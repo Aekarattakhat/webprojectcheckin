@@ -18,6 +18,7 @@ const AddClassModal = ({ showAddClassModal, setShowAddClassModal, user}) => {
         const ref = await addDoc(collection(db,"classroom"),{
             owner:user,
             info:formData,
+            checkin:{},
         })
         console.log(ref)
         closeModal()
