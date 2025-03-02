@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { db } from '@/config';
-import { collection, getDocs, addDoc, setDoc, doc, getDoc, runTransaction,onSnapshot} from 'firebase/firestore';
+import { collection, getDocs, addDoc, setDoc, doc, getDoc, runTransaction,onSnapshot,updateDoc} from 'firebase/firestore';
 import { QRCodeCanvas } from 'qrcode.react';
 import ShowcheckinModal from '@/components/modal/showcheckin';
 
@@ -14,6 +14,13 @@ const ClassroomManagement = ({ cid, onClose }) => {
   const [showCheckin, setShowCheckin] = useState(false);
   const [showStudents, setShowStudents] = useState(false);
   const [checkins, setCheckins] = useState("");
+  const [cno,setcno] = useState(1);
+
+  const handleCNO = (cno) => {
+    setcno(cno)
+    setShowCheckin(true)
+  };
+
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -90,49 +97,43 @@ const ClassroomManagement = ({ cid, onClose }) => {
     );
   };
 
-  const addCheckin = async () => {
-    try {
-      const newCheckinNumber = await runTransaction(db, async (transaction) => {
-        const counterRef = doc(db, `classroom/${cid}/checkinCounter`, 'counter');
-        const counterDoc = await transaction.get(counterRef);
-
-        let count = 1;
-        if (counterDoc.exists()) {
-          count = (counterDoc.data().count || 0) + 1;
-        }
-
-        transaction.set(counterRef, {
-          count: count
-        }, { merge: true });
-
-        return count;
-      });
-
-      const cno = `CHECKIN_${newCheckinNumber}`;
-      const checkinDocRef = doc(db, `classroom/${cid}/checkin`, cno);
-      const currentDate = new Date();
-      await setDoc(checkinDocRef, {
-        code: course?.info?.code || 'ABC123',
-        date: currentDate.toISOString().split('T')[0],
-        time: currentDate.toISOString()
-      });
-
-      const scoresRef = collection(db, `classroom/${cid}/checkin/${cno}/scores`);
-      const batchPromises = students.map(student =>
-        addDoc(scoresRef, {
-          uid: student.stdid,
-          name: student.name,
-          status: '0',
-          date: currentDate.toISOString()
-        })
-      );
-      await Promise.all(batchPromises);
-
-      
-    } catch (error) {
-      console.error("Error adding check-in:", error);
-    }
+  const generateRandomPassword = () => {
+    return Math.floor(1000 + Math.random() * 9000).toString(); 
   };
+
+  
+
+  const addCheckin = async () => {
+    const classid = course.id
+    const classRef = doc(db, "classroom", classid);
+    const classSnap = await getDoc(classRef);
+
+    if (classSnap.exists()) {
+        const classData = classSnap.data();
+        const checkinData = classData['checkin'] || {}; // ถ้ายังไม่มี checkin ให้เป็น object ว่าง
+
+        // หาหมายเลข checkin ล่าสุด แล้วเพิ่มใหม่
+        const newCheckinId = Object.keys(checkinData).length + 1;
+        const password = generateRandomPassword();
+
+        // สร้างโครงสร้างข้อมูลใหม่
+        const newCheckin = {
+            
+            date: new Date().toISOString(),
+            password: password,
+            status: "1"
+        };
+
+        // อัปเดตข้อมูล checkin ใหม่กลับไปยัง Firestore
+        await updateDoc(classRef, {
+            [`checkin.${newCheckinId}`]: newCheckin
+        });
+
+        console.log("Check-in added successfully:", newCheckin);
+    } else {
+        console.log("Classroom not found!");
+    }
+};
 
   if (!course) return <div>Loading...</div>;
 
@@ -145,6 +146,7 @@ const ClassroomManagement = ({ cid, onClose }) => {
     <button onClick={onClose} className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">Close</button>
     <button onClick={() => setShowQRCode(!showQRCode)} className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">{showQRCode ? 'Hide QR Code' : 'Show QR Code'}</button>
     <button onClick={() => {setShowStudents(!showStudents);if (!showStudents) fetchStudents();}} className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">{showStudents ? 'Hide Students List' : 'Show Students List'}</button>
+    <button onClick={() => addCheckin()}className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"> ADD</button>
   </div>
   
   {showQRCode && generateQRCode()}
@@ -209,17 +211,12 @@ const ClassroomManagement = ({ cid, onClose }) => {
         <td className="border border-gray-300 p-2">{checkin.status || "ไม่ระบุ"}</td>
         <td className="border border-gray-300 p-2">
           <button
-            onClick={() => setShowCheckin(true)}
+            onClick={() => handleCNO(index+1)}
             className="bg-blue-500 text-white px-2 py-1 rounded-lg hover:bg-blue-600"
           >
             เช็คชื่อ
           </button>
-          <button
-            onClick={() => addEmptyCheckin()}
-            className="bg-green-500 text-white px-2 py-1 rounded-lg hover:bg-green-600"
-          >
-            เพิ่ม
-          </button>
+          
         </td>
       </tr>
     );
@@ -230,6 +227,7 @@ const ClassroomManagement = ({ cid, onClose }) => {
 
       <ShowcheckinModal
         ShowcheckinModal={showCheckin} 
+        cno = {cno}
         setShowcheckinModal={setShowCheckin} 
         course={course}/>
     </div>
