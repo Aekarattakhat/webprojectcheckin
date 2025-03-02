@@ -14,12 +14,13 @@ const AddClassModal = ({ showAddClassModal, setShowAddClassModal, user }) => {
     const handleClassSubmit = async (e) => {
         e.preventDefault();
         console.log("Form Data:", formData);
-        const ref = await addDoc(collection(db, "classroom"), {
-            owner: user,
-            info: formData,
-        });
-        console.log(ref);
-        closeModal();
+        const ref = await addDoc(collection(db,"classroom"),{
+            owner:user,
+            info:formData,
+            checkin:{},
+        })
+        console.log(ref)
+        closeModal()
     };
 
     const handleChange = (e) => {
