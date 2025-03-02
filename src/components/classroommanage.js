@@ -138,33 +138,41 @@ const ClassroomManagement = ({ cid, onClose }) => {
 
 
   return (
-    <div className="classroom-management p-4 bg-gray-100 rounded-lg shadow-md" style={{ backgroundImage: `url(${course?.info?.backgroundImage || 'none'})` }}>
-      <h2 className="text-2xl font-bold mb-4">{course.info?.name || 'Unnamed Course'} (CID: {course.id})</h2>
-      <button onClick={onClose} className="bg-red-500 text-white px-4 py-2 rounded-lg mb-4 hover:bg-red-600">Close</button>
+    <div className="classroom-management p-4 bg-gray-100 rounded-lg shadow-md" style={{ backgroundImage: `url(${course?.info?.photo || 'none'})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+  <h2 className="text-2xl font-bold mb-4 bg-black bg-opacity-50 text-white p-2 rounded-lg inline-block">{course.info?.name || 'Unnamed Course'} (CID: {course.id})</h2>
+  
+  <div className="flex gap-2 mb-4">
+    <button onClick={onClose} className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">Close</button>
+    <button onClick={() => setShowQRCode(!showQRCode)} className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">{showQRCode ? 'Hide QR Code' : 'Show QR Code'}</button>
+    <button onClick={() => {setShowStudents(!showStudents);if (!showStudents) fetchStudents();}} className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">{showStudents ? 'Hide Students List' : 'Show Students List'}</button>
+  </div>
+  
+  {showQRCode && generateQRCode()}
+  
+  {showStudents && students.length > 0 && <table className="w-full mt-4 border-collapse border border-gray-300 bg-white bg-opacity-80 rounded-lg"><thead><tr className="bg-gray-200">
+    <th className="border border-gray-300 p-2">ลำดับ</th>
+    <th className="border border-gray-300 p-2">รหัส</th>
+    <th className="border border-gray-300 p-2">ชื่อ</th>
+    <th className="border border-gray-300 p-2">สถานะ</th>
+    </tr></thead><tbody>{students.map((student, index) => (<tr key={student.id} className="border border-gray-300">
+      <td className="border border-gray-300 p-2">{index + 1}</td><td className="border border-gray-300 p-2">{student.stdid}</td><td className="border border-gray-300 p-2">{student.name}</td><td className="border border-gray-300 p-2">{student.status === '0' ? 'ยังไม่เช็คชื่อ' : 'เช็คชื่อแล้ว'}</td></tr>))}</tbody></table>}
 
-      <button onClick={() => setShowQRCode(!showQRCode)} className="bg-blue-500 text-white px-4 py-2 rounded-lg mr-2 hover:bg-blue-600">{showQRCode ? 'Hide QR Code' : 'Show QR Code'}</button>{showQRCode && generateQRCode()}
-
-      <button onClick={() => {setShowStudents(!showStudents);if (!showStudents) fetchStudents();}} className="bg-green-500 text-white px-4 py-2 rounded-lg mt-4 hover:bg-green-600">{showStudents ? 'Hide Students List' : 'Show Students List'}</button>{showStudents && students.length > 0 && <table className="w-full mt-4 border-collapse border border-gray-300"><thead><tr className="bg-gray-200">
+  <h3 className="text-xl font-semibold mt-6 bg-black bg-opacity-50 text-white p-2 rounded-lg inline-block">Check-in History</h3> 
+  {checkinHistory &&(
+    <table className="w-full mt-4 border-collapse border border-gray-300 bg-white bg-opacity-80 rounded-lg">
+    <thead>
+      <tr className="bg-gray-200">
         <th className="border border-gray-300 p-2">ลำดับ</th>
-        <th className="border border-gray-300 p-2">รหัส</th>
-        <th className="border border-gray-300 p-2">ชื่อ</th>
+        <th className="border border-gray-300 p-2">วันที่-เวลา</th>
+        <th className="border border-gray-300 p-2">จำนวนคนเข้าเรียน</th>
         <th className="border border-gray-300 p-2">สถานะ</th>
-        </tr></thead><tbody>{students.map((student, index) => (<tr key={student.id} className="border border-gray-300">
-          <td className="border border-gray-300 p-2">{index + 1}</td><td className="border border-gray-300 p-2">{student.stdid}</td><td className="border border-gray-300 p-2">{student.name}</td><td className="border border-gray-300 p-2">{student.status === '0' ? 'ยังไม่เช็คชื่อ' : 'เช็คชื่อแล้ว'}</td></tr>))}</tbody></table>}
+        <th className="border border-gray-300 p-2">จัดการ</th>
+      </tr>
+    </thead>
+    <tbody>
 
-      <h3 className="text-xl font-semibold mt-6">Check-in History</h3> 
-      {checkinHistory &&(
-        <table className="w-full mt-4 border-collapse border border-gray-300">
-        <thead>
-          <tr className="bg-gray-200">
-            <th className="border border-gray-300 p-2">ลำดับ</th>
-            <th className="border border-gray-300 p-2">วันที่-เวลา</th>
-            <th className="border border-gray-300 p-2">จำนวนคนเข้าเรียน</th>
-            <th className="border border-gray-300 p-2">สถานะ</th>
-            <th className="border border-gray-300 p-2">จัดการ</th>
-          </tr>
-        </thead>
-        <tbody>
+
+
   {checkinHistory.map((checkin, index) => {
     // ตรวจสอบและแปลงค่า date
     let formattedDate = "ไม่พบข้อมูล";
