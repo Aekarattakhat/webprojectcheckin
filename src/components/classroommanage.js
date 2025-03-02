@@ -149,53 +149,81 @@ const ClassroomManagement = ({ cid, onClose }) => {
         <th className="border border-gray-300 p-2">รหัส</th>
         <th className="border border-gray-300 p-2">ชื่อ</th>
         <th className="border border-gray-300 p-2">สถานะ</th>
-        </tr></thead><tbody>{students.map((student, index) => (<tr key={student.id} className="border border-gray-300"><td className="border border-gray-300 p-2">{index + 1}</td><td className="border border-gray-300 p-2">{student.stdid}</td><td className="border border-gray-300 p-2">{student.name}</td><td className="border border-gray-300 p-2">{student.status === '0' ? 'ยังไม่เช็คชื่อ' : 'เช็คชื่อแล้ว'}</td></tr>))}</tbody></table>}
+        </tr></thead><tbody>{students.map((student, index) => (<tr key={student.id} className="border border-gray-300">
+          <td className="border border-gray-300 p-2">{index + 1}</td><td className="border border-gray-300 p-2">{student.stdid}</td><td className="border border-gray-300 p-2">{student.name}</td><td className="border border-gray-300 p-2">{student.status === '0' ? 'ยังไม่เช็คชื่อ' : 'เช็คชื่อแล้ว'}</td></tr>))}</tbody></table>}
 
       <h3 className="text-xl font-semibold mt-6">Check-in History</h3> 
       {checkinHistory &&(
         <table className="w-full mt-4 border-collapse border border-gray-300">
-          <thead>
-            <tr className="bg-gray-200">
-              <th className="border border-gray-300 p-2">ลำดับ</th>
-              <th className="border border-gray-300 p-2">วันที่-เวลา</th>
-              <th className="border border-gray-300 p-2">จำนวนคนเข้าเรียน</th>
-              <th className="border border-gray-300 p-2">สถานะ</th>
-              <th className="border border-gray-300 p-2">จัดการ</th>
-            </tr>
-          </thead>
-          <tbody>
-            {checkinHistory.map((checkin, index) => (
-              <tr key={checkin.id} className="border border-gray-300">
-                <td className="border border-gray-300 p-2">{index + 1}</td>
-                <td className="border border-gray-300 p-2">{`${checkin.date} ${new Date(checkin.time).toLocaleTimeString()}`}</td>
-                <td className="border border-gray-300 p-2">{students}</td>
-                <td className="border border-gray-300 p-2">{checkin.status}</td>
-                <td className="border border-gray-300 p-2">
-                  <button
-                    // แก้ไขที่นี่: เพิ่มการล็อกเพื่อตรวจสอบสถานะ showCheckin
-                    onClick={() => { 
-                      console.log("Button 'เช็คชื่อ' clicked, setting showCheckin to true");
-                      setShowCheckin(true); // เรียก setShowCheckin(true) เพื่อแสดงโมดัลเท่านั้น
-                    }}
-                    className="bg-blue-500 text-white px-2 py-1 rounded-lg hover:bg-blue-600"
-                  >เช็คชื่อ
-                  </button>
-                  <button
-                    onClick={() => addEmptyCheckin()} 
-                    className="bg-green-500 text-white px-2 py-1 rounded-lg ml-2 hover:bg-green-600"
-                  >เพิ่ม
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <thead>
+          <tr className="bg-gray-200">
+            <th className="border border-gray-300 p-2">ลำดับ</th>
+            <th className="border border-gray-300 p-2">วันที่-เวลา</th>
+            <th className="border border-gray-300 p-2">จำนวนคนเข้าเรียน</th>
+            <th className="border border-gray-300 p-2">สถานะ</th>
+            <th className="border border-gray-300 p-2">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody>
+  {checkinHistory.map((checkin, index) => {
+    // ตรวจสอบและแปลงค่า date
+    let formattedDate = "ไม่พบข้อมูล";
+    
+    if (checkin.date) {
+      if (typeof checkin.date === "string") {
+        // แปลง String -> Date
+        formattedDate = new Date(Date.parse(checkin.date)).toLocaleString("th-TH", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
+      } else if (checkin.date.toDate) {
+        // กรณีเป็น Firestore Timestamp
+        formattedDate = checkin.date.toDate().toLocaleString("th-TH", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
+      }
+    }
+
+    return (
+      <tr key={checkin.id || index} className="border border-gray-300">
+        <td className="border border-gray-300 p-2">{index + 1}</td>
+        <td className="border border-gray-300 p-2">{formattedDate}</td>
+        <td className="border border-gray-300 p-2">{Object.keys(checkin.students || {}).length}</td>
+        <td className="border border-gray-300 p-2">{checkin.status || "ไม่ระบุ"}</td>
+        <td className="border border-gray-300 p-2">
+          <button
+            onClick={() => setShowCheckin(true)}
+            className="bg-blue-500 text-white px-2 py-1 rounded-lg hover:bg-blue-600"
+          >
+            เช็คชื่อ
+          </button>
+          <button
+            onClick={() => addEmptyCheckin()}
+            className="bg-green-500 text-white px-2 py-1 rounded-lg hover:bg-green-600"
+          >
+            เพิ่ม
+          </button>
+        </td>
+      </tr>
+    );
+  })}
+</tbody>
+      </table>
       )}
 
       <ShowcheckinModal
-        isOpen={showCheckin} // ใช้ isOpen เพื่อควบคุมการแสดงโมดัล
-        onClose={() => setShowCheckin(false)} // ใช้ onClose เพื่อปิดโมดัล
-        course={course} />
+        ShowcheckinModal={showCheckin} 
+        setShowcheckinModal={setShowCheckin} 
+        course={course}/>
     </div>
   );
 };
