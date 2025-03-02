@@ -5,7 +5,7 @@ import { doc, onSnapshot, updateDoc } from "firebase/firestore";
 import QAModal from "./qandA";
 import { deleteField } from "firebase/firestore";
 
-const ShowcheckinModal = ({ ShowcheckinModal, setShowcheckinModal, course }) => {
+const ShowcheckinModal = ({ ShowcheckinModal, setShowcheckinModal, course, cno }) => {
   const [showQAModal, setShowQAModal] = useState(false);
   const [realTimeCourse, setRealTimeCourse] = useState(course);
 
@@ -27,15 +27,13 @@ const ShowcheckinModal = ({ ShowcheckinModal, setShowcheckinModal, course }) => 
   const closeModal = () => {
     setShowcheckinModal(false);
   };
-
   
-
   const updateStatus = async (newStatus) => {
     if (!realTimeCourse?.id) return;
     try {
       const checkinRef = doc(db, "classroom", realTimeCourse.id);
       await updateDoc(checkinRef, {
-        "checkin.1.status": newStatus,
+        [`checkin.${cno}.status`]: newStatus,  // เปลี่ยนจาก checkin.1 เป็น checkin.cno
       });
     } catch (error) {
       console.error("Error updating status:", error);
@@ -48,23 +46,22 @@ const ShowcheckinModal = ({ ShowcheckinModal, setShowcheckinModal, course }) => 
     try {
       const checkinRef = doc(db, "classroom", realTimeCourse.id);
       await updateDoc(checkinRef, {
-        [`checkin.1.students.${studentId}`]: deleteField(),
+        [`checkin.${cno}.students.${studentId}`]: deleteField(),
       });
     } catch (error) {
       console.error("Error deleting student:", error);
       alert("Failed to delete student");
     }
   };
-  
 
   const updateScore = async (studentId, change) => {
     if (!realTimeCourse?.id) return;
     try {
       const checkinRef = doc(db, "classroom", realTimeCourse.id);
-      const studentData = realTimeCourse?.checkin?.["1"]?.students?.[studentId];
+      const studentData = realTimeCourse?.checkin?.[cno]?.students?.[studentId];
       const newScore = (studentData?.score || 0) + change;
       await updateDoc(checkinRef, {
-        [`checkin.1.students.${studentId}.score`]: newScore,
+        [`checkin.${cno}.students.${studentId}.score`]: newScore,
       });
     } catch (error) {
       console.error("Error updating score:", error);
@@ -93,7 +90,8 @@ const ShowcheckinModal = ({ ShowcheckinModal, setShowcheckinModal, course }) => 
             <p>Room: {realTimeCourse.info?.room}</p>
             <p>Code: {realTimeCourse.info?.code}</p>
             <p>Owner: {realTimeCourse.owner}</p>
-            <p>Status: {realTimeCourse?.checkin?.["1"]?.status || "N/A"}</p>
+            <p>Status: {realTimeCourse?.checkin?.[cno]?.status || "N/A"}</p>
+            <p>Password: {realTimeCourse?.checkin?.[cno]?.password || "N/A"}</p>
 
             <div className="mt-4">
               <button onClick={() => updateStatus("0")} className="bg-red-500 text-white px-4 py-2 rounded-lg mr-2 hover:bg-red-600">
@@ -119,8 +117,8 @@ const ShowcheckinModal = ({ ShowcheckinModal, setShowcheckinModal, course }) => 
                     </tr>
                   </thead>
                   <tbody>
-                    {realTimeCourse?.checkin?.["1"]?.students
-                      ? Object.entries(realTimeCourse.checkin["1"].students).map(([studentId, student]) => (
+                    {realTimeCourse?.checkin?.[cno]?.students
+                      ? Object.entries(realTimeCourse.checkin[cno].students).map(([studentId, student]) => (
                           <tr key={studentId} className="bg-gray-800 text-white">
                             <td className="border border-gray-500 px-4 py-2">{student.stdid}</td>
                             <td className="border border-gray-500 px-4 py-2">{student.name}</td>
@@ -144,9 +142,9 @@ const ShowcheckinModal = ({ ShowcheckinModal, setShowcheckinModal, course }) => 
     onClick={() => deleteStudent(studentId)}
     className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
   >
-    Delete
-  </button>
-</td>
+                                Delete
+                              </button>
+                            </td>
 
                           </tr>
                         ))
@@ -181,7 +179,7 @@ const ShowcheckinModal = ({ ShowcheckinModal, setShowcheckinModal, course }) => 
           showQAModal={showQAModal} 
           setShowQAModal={setShowQAModal} 
           cid={realTimeCourse.id} 
-          cno={"1"} 
+          cno={cno} 
         />
       )}
     </Modal>
