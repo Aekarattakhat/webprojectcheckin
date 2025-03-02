@@ -1,15 +1,11 @@
 'use client'
 import { useState } from 'react';
-import  LoginComponent  from '@/components/login';
-import  ShowProfileUserComponent  from '@/components/showProfileuser';
+import LoginComponent from '@/components/login';
+import ShowProfileUserComponent from '@/components/showProfileuser';
 import ShowClassComponent from '@/components/showClass';
-import ShowcheckinModal from '@/components/modal/showcheckin';
-import QAModal from '@/components/modal/qandA';
 import ClassroomManage from '@/components/classroommanage';
 
-
 export default function Home() {
-  
   const [state, setState] = useState({
     user: null,
     image: null,
@@ -18,7 +14,6 @@ export default function Home() {
   });
 
   const [classes, setClasses] = useState(null);
-  const [showCheckin, setShowCheckin] = useState(false); // เพิ่ม state สำหรับ modal
   const [selectedClass, setSelectedClass] = useState(null);
 
   const handleManageClass = (cid) => {
@@ -26,26 +21,36 @@ export default function Home() {
   };
 
   return (
-    <div>
-      <LoginComponent state={state} setState={setState} setClasses={setClasses} />
-      
-      {state.user && <ShowProfileUserComponent state={state} setState={setState} />}
-      {classes && state.user && (
-        <ShowClassComponent 
-          classes={classes} 
-          user={state.user} 
-          onManageClass={handleManageClass} // ส่งฟังก์ชันไปให้ ShowClassComponent
-        />
-      )}
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center p-4">
+      <div className="w-full max-w-4xl bg-white shadow-lg rounded-lg p-6">
+        <h1 className="text-2xl font-bold text-center text-gray-800 mb-4">Classroom heckin System</h1>
 
-      {/* แสดง Classroom Management เมื่อเลือกวิชา */}
-      {selectedClass && (
-        <ClassroomManage cid={selectedClass} onClose={() => setSelectedClass(null)} />
-      )}
+        <div className="mb-4">
+          <LoginComponent state={state} setState={setState} setClasses={setClasses} />
+        </div>
 
-      {/* ปุ่มเปิด Modal (ยังคงไว้สำหรับการเช็คชื่อทั่วไป) */}
+        {state.user && (
+          <div className="mb-4 border-t pt-4">
+            <ShowProfileUserComponent state={state} setState={setState} />
+          </div>
+        )}
 
-      {/* ปุ่มเปิด Modal */}
+        {classes && state.user && (
+          <div className="mt-4 border-t pt-4">
+            <ShowClassComponent 
+              classes={classes} 
+              user={state.user} 
+              onManageClass={handleManageClass} 
+            />
+          </div>
+        )}
+
+        {selectedClass && (
+          <div className="mt-4">
+            <ClassroomManage cid={selectedClass} onClose={() => setSelectedClass(null)} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
