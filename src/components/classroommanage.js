@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { db } from '@/config';
-import { collection, getDocs, addDoc, setDoc, doc, query, where, getDoc, runTransaction } from 'firebase/firestore';
+import { collection, getDocs, addDoc, setDoc, doc, getDoc, runTransaction } from 'firebase/firestore';
 import { QRCodeCanvas } from 'qrcode.react';
 import ShowcheckinModal from '@/components/modal/showcheckin';
 
