@@ -1,5 +1,5 @@
 import { db } from "@/config";
-import { doc, onSnapshot, setDoc } from "firebase/firestore"; // Added setDoc
+import { doc, onSnapshot, setDoc } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
 import Modal from "react-modal";
 
@@ -24,18 +24,16 @@ const QAModal = ({ showQAModal, setShowQAModal, cid, cno }) => {
         }
 
         return () => stopListening();
-    }, [showQAModal, loading, formData.question_no]); // Added formData.question_no to dependencies
+    }, [showQAModal, loading, formData.question_no]);
 
     const startListening = async () => {
         const QARef = doc(db, "classroom", cid);
 
-        // Check if the question exists, if not, create it
         unsubscribeRef.current = onSnapshot(QARef, async (snapshot) => {
             if (snapshot.exists()) {
                 const data = snapshot.data();
                 const answers = data?.checkin?.[cno]?.answers || {};
 
-                // If the question number doesn't exist, initialize it
                 if (!answers[formData.question_no]) {
                     await setDoc(
                         QARef,
@@ -66,7 +64,6 @@ const QAModal = ({ showQAModal, setShowQAModal, cid, cno }) => {
                     .sort((a, b) => a.timestamp - b.timestamp);
                 setQAData(sortedData);
             } else {
-                // If document doesn't exist, create it with the question
                 await setDoc(
                     QARef,
                     {
@@ -97,6 +94,19 @@ const QAModal = ({ showQAModal, setShowQAModal, cid, cno }) => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+
+        // จำกัดให้ question_no รับเฉพาะตัวเลข
+        if (name === "question_no") {
+            // ถ้าค่าไม่ใช่ตัวเลขหรือว่างเปล่า ให้อัปเดตเป็นค่าว่างหรือตัวเลขเท่านั้น
+            if (!/^\d*$/.test(value)) {
+                setError((prev) => ({
+                    ...prev,
+                    question_no: "Please enter numbers only",
+                }));
+                return;
+            }
+        }
+
         setFormData((prevData) => ({
             ...prevData,
             [name]: value,
@@ -137,13 +147,16 @@ const QAModal = ({ showQAModal, setShowQAModal, cid, cno }) => {
 
     return (
         <Modal isOpen={showQAModal} ariaHideApp={false} className="p-6 bg-white rounded-lg">
-            <h1 className="text-xl font-bold mb-4">Set Question</h1>
+            <h1 className="text-2xl font-bold mb-4 text-center">Set Question</h1>
 
-            <form onSubmit={(e) => e.preventDefault()} className="max-w-md mx-auto p-4 bg-gray-100 shadow-md rounded-lg">
-                <div className="mb-4">
-                    <label className="block text-gray-700">Question Number:</label>
+            <form 
+                onSubmit={(e) => e.preventDefault()} 
+                className="max-w-md w-full mx-auto p-4 bg-gray-100 shadow-md rounded-lg flex flex-col items-center"
+            >
+                <div className="mb-4 w-full">
+                    <label className="block text-black-700">Question Number:</label>
                     <input 
-                        type="text" 
+                        type="text" // กลับมาใช้ type="text" แทน type="number"
                         name="question_no" 
                         value={formData.question_no} 
                         onChange={handleChange}
@@ -152,8 +165,8 @@ const QAModal = ({ showQAModal, setShowQAModal, cid, cno }) => {
                     />
                     {error.question_no && <p className="text-red-500 text-sm mt-1">{error.question_no}</p>}
                 </div>
-                <div className="mb-4">
-                    <label className="block text-gray-700">Question Text:</label>
+                <div className="mb-4 w-full">
+                    <label className="block text-black-700">Question Text:</label>
                     <input 
                         type="text" 
                         name="question_text" 
@@ -166,19 +179,19 @@ const QAModal = ({ showQAModal, setShowQAModal, cid, cno }) => {
                 </div>
                 <button 
                     onClick={handleStart} 
-                    className="w-full bg-green-500 text-white py-2 rounded-lg flex items-center justify-center"
+                    className="w-full max-w-xs bg-green-500 text-white py-2 rounded-lg flex items-center justify-center hover:bg-green-600 transition-colors"
                 >
                     Start Question {loading && <span className="ml-2 animate-spin">🔄</span>}
                 </button>
                 <button 
                     onClick={() => setLoading(false)} 
-                    className="w-full bg-red-500 text-white py-2 rounded-lg mt-2"
+                    className="w-full max-w-xs bg-red-500 text-white py-2 rounded-lg mt-2 hover:bg-red-600 transition-colors"
                 >
                     Stop Question
                 </button>
             </form>
 
-            <button onClick={closeModal} className="w-full bg-blue-500 text-white py-2 rounded-lg mt-4">
+            <button onClick={closeModal} className="w-full max-w-md mx-auto block bg-blue-500 text-white px-10 py-2 rounded-lg mt-4 hover:bg-blue-600 transition-colors">
                 Cancel
             </button>
 
