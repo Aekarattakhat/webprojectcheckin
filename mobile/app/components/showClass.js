@@ -8,9 +8,15 @@ import { doc, getDoc, updateDoc,deleteField} from "firebase/firestore";
 const ShowClassComponent =  ({user}) =>{
     const [showAddClassModa,setShowAddClassModa] = useState(false)
     const [showCheckInModal,setShowCheckInModal] = useState(false)
+    const [classid,setClassid,] = useState("")
     
     const handleAddClass = async () =>{
         setShowAddClassModa(true)
+    }
+
+    const handleCheckIn = (cid)=>{
+        setClassid(cid)
+        setShowCheckInModal(true)
     }
 
     const handleExitClass = async (classId) =>{
@@ -35,7 +41,7 @@ const ShowClassComponent =  ({user}) =>{
                 return (<View style={{ flexDirection: 'row', padding: 10,flex: 1 }}>
                     <Text>{value.info.name}    </Text>
                     <Text>{value.info.code}    </Text>
-                    <Button title="Check in" onPress={()=>setShowCheckInModal(true)}></Button>
+                    <Button title="Check in" onPress={()=>handleCheckIn(key)}></Button>
                     <Button title="exit class" onPress={()=>handleExitClass(key)}></Button>
                 </View>
                 )}
@@ -43,7 +49,7 @@ const ShowClassComponent =  ({user}) =>{
         />
 
         <AddClassModal showAddClassModal={showAddClassModa} setShowAddClassModal={setShowAddClassModa} user={user}/>
-        <CheckInModal showCheckInModal={showCheckInModal} setshowCheckInModal={setShowCheckInModal} user={user}/>
+        <CheckInModal showCheckInModal={showCheckInModal} setshowCheckInModal={setShowCheckInModal} user={user} classid={classid}/>
     </View>
     );
 
