@@ -146,7 +146,7 @@ const ClassroomManagement = ({ cid, onClose }) => {
     <button onClick={onClose} className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">Close</button>
     <button onClick={() => setShowQRCode(!showQRCode)} className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">{showQRCode ? 'Hide QR Code' : 'Show QR Code'}</button>
     <button onClick={() => {setShowStudents(!showStudents);if (!showStudents) fetchStudents();}} className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">{showStudents ? 'Hide Students List' : 'Show Students List'}</button>
-    <button onClick={() => addCheckin()}className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"> ADD</button>
+    <button onClick={() => addCheckin()}className="bg-yellow-500 text-black px-4 py-2 rounded-lg hover:bg-yellow-600"> ADD</button>
   </div>
   
   {showQRCode && generateQRCode()}
@@ -155,9 +155,8 @@ const ClassroomManagement = ({ cid, onClose }) => {
     <th className="border border-gray-300 p-2">ลำดับ</th>
     <th className="border border-gray-300 p-2">รหัส</th>
     <th className="border border-gray-300 p-2">ชื่อ</th>
-    <th className="border border-gray-300 p-2">สถานะ</th>
     </tr></thead><tbody>{students.map((student, index) => (<tr key={student.id} className="border border-gray-300">
-      <td className="border border-gray-300 p-2">{index + 1}</td><td className="border border-gray-300 p-2">{student.stdid}</td><td className="border border-gray-300 p-2">{student.name}</td><td className="border border-gray-300 p-2">{student.status === '0' ? 'ยังไม่เช็คชื่อ' : 'เช็คชื่อแล้ว'}</td></tr>))}</tbody></table>}
+      <td className="border border-gray-300 p-2">{index + 1}</td><td className="border border-gray-300 p-2">{student.stdid}</td><td className="border border-gray-300 p-2">{student.name}</td></tr>))}</tbody></table>}
 
   <h3 className="text-xl font-semibold mt-6 bg-black bg-opacity-50 text-white p-2 rounded-lg inline-block">Check-in History</h3> 
   {checkinHistory &&(
