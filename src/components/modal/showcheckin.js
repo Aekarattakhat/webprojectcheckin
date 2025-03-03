@@ -95,10 +95,10 @@ const ShowcheckinModal = ({ ShowcheckinModal, setShowcheckinModal, course, cno }
 
             <div className="mt-4">
               <button onClick={() => updateStatus("0")} className="bg-red-500 text-white px-4 py-2 rounded-lg mr-2 hover:bg-red-600">
-                Set Status to 0
+                Close Checkin
               </button>
               <button onClick={() => updateStatus("1")} className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">
-                Set Status to 1
+                Open Checkin
               </button>
             </div>
 

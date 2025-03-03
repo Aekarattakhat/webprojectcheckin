@@ -1,5 +1,5 @@
 import { db } from "@/config";
-import { doc, onSnapshot, setDoc, getDoc } from "firebase/firestore";
+import { doc, onSnapshot, setDoc, getDoc, updateDoc } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
 import Modal from "react-modal";
 
@@ -16,18 +16,15 @@ const QAModal = ({ showQAModal, setShowQAModal, cid, cno }) => {
 
         const QARef = doc(db, "classroom", cid);
         try {
-            // Fetch current data from Firestore
             const docSnapshot = await getDoc(QARef);
             if (!docSnapshot.exists()) return;
 
             const currentData = docSnapshot.data();
             const checkinData = currentData.checkin?.[cno] || {};
 
-            // Get old answers data
             const oldAnswers = checkinData.answers?.[oldQuestionNo]?.students || {};
             const oldQuestionShow = checkinData.question_show || false;
 
-            // Prepare new data structure for the new question_no
             const newAnswers = {
                 question_text: questionText,
                 students: Object.entries(oldAnswers).reduce((acc, [studentId, info]) => ({
@@ -36,16 +33,15 @@ const QAModal = ({ showQAModal, setShowQAModal, cid, cno }) => {
                 }), {})
             };
 
-            // Update Firestore with new question_no without deleting the old one
             await setDoc(
                 QARef,
                 {
                     checkin: {
                         [cno]: {
                             answers: {
-                                [newQuestionNo]: newAnswers // เพิ่มข้อมูลสำหรับ question_no ใหม่
+                                [newQuestionNo]: newAnswers // Add data for the new question_no
                             },
-                            question_no: newQuestionNo // อัปเดต question_no ปัจจุบัน
+                            question_no: newQuestionNo // Update current question_no
                         }
                     }
                 },
@@ -62,25 +58,21 @@ const QAModal = ({ showQAModal, setShowQAModal, cid, cno }) => {
 
         const QARef = doc(db, "classroom", cid);
         try {
-            // Fetch current data from Firestore
             const docSnapshot = await getDoc(QARef);
             const currentData = docSnapshot.exists() ? docSnapshot.data().checkin?.[cno]?.answers || {} : {};
 
-            // Check if question_no has changed
             let oldQuestionNo = Object.keys(currentData).find(key => currentData[key].question_text === questionText);
             if (oldQuestionNo && oldQuestionNo !== questionNo) {
-                // If question_no changed, migrate the data but keep the old data
                 await migrateQuestionData(oldQuestionNo, questionNo, questionText, cid);
             }
 
-            // Update Firestore with new data
             await setDoc(
                 QARef,
                 {
                     checkin: {
                         [cno]: {
-                            question_show: showStatus, // อัปเดต question_show ตามสถานะ
-                            question_no: questionNo, // อัปเดต question_no ปัจจุบัน
+                            question_show: showStatus,
+                            question_no: questionNo,
                             answers: {
                                 [questionNo]: {
                                     question_text: questionText,
@@ -100,6 +92,33 @@ const QAModal = ({ showQAModal, setShowQAModal, cid, cno }) => {
         }
     };
 
+    // Helper function to delete a student's answer from Firestore
+    const deleteStudentAnswer = async (studentId) => {
+        const QARef = doc(db, "classroom", cid);
+        try {
+            const docSnapshot = await getDoc(QARef);
+            if (!docSnapshot.exists()) return;
+
+            const currentData = docSnapshot.data();
+            const checkinData = currentData.checkin?.[cno] || {};
+            const questionNo = checkinData.question_no || formData.question_no;
+            const answers = checkinData.answers?.[questionNo]?.students || {};
+
+            // Remove the student from the answers
+            delete answers[studentId];
+
+            // Update Firestore with the modified answers
+            await updateDoc(QARef, {
+                [`checkin.${cno}.answers.${questionNo}.students`]: answers
+            });
+
+            // Update local state to reflect the deletion
+            setQAData(QAData.filter(item => item.studentId !== studentId));
+        } catch (err) {
+            console.error("Error deleting student answer:", err);
+        }
+    };
+
     // Start real-time listener
     const startListening = () => {
         const QARef = doc(db, "classroom", cid);
@@ -107,10 +126,9 @@ const QAModal = ({ showQAModal, setShowQAModal, cid, cno }) => {
             if (snapshot.exists()) {
                 const data = snapshot.data();
                 const checkinData = data?.checkin?.[cno] || {};
-                const questionNo = checkinData.question_no || formData.question_no; // Use question_no from Firestore or formData
+                const questionNo = checkinData.question_no || formData.question_no;
                 const students = checkinData.answers?.[questionNo]?.students || {};
 
-                // Sync QAData with Firestore data only
                 setQAData(Object.entries(students)
                     .map(([studentId, info]) => ({
                         studentId,
@@ -119,11 +137,10 @@ const QAModal = ({ showQAModal, setShowQAModal, cid, cno }) => {
                     }))
                     .sort((a, b) => a.timestamp - b.timestamp));
                 
-                // Update formData.question_no to match Firestore
                 setFormData(prev => ({ ...prev, question_no: questionNo }));
             } else {
                 setQAData([]);
-                updateQuestion(formData.question_no, formData.question_text, false); // Default to false when no data exists
+                updateQuestion(formData.question_no, formData.question_text, false);
             }
         });
     };
@@ -134,7 +151,7 @@ const QAModal = ({ showQAModal, setShowQAModal, cid, cno }) => {
             unsubscribeRef.current();
             unsubscribeRef.current = null;
             if (formData.question_no) {
-                updateQuestion(formData.question_no, formData.question_text, false); // Set question_show to false when stopping
+                updateQuestion(formData.question_no, formData.question_text, false);
             }
         }
     };
@@ -158,9 +175,8 @@ const QAModal = ({ showQAModal, setShowQAModal, cid, cno }) => {
         setFormData({ ...formData, [name]: value });
         setError({ ...error, [name]: "" });
 
-        // If question_no changes and there are answers, update Firestore immediately
         if (name === "question_no" && value && QAData.length > 0) {
-            updateQuestion(value, formData.question_text, loading); // Update with current question_text and status
+            updateQuestion(value, formData.question_text, loading);
         }
     };
 
@@ -180,7 +196,7 @@ const QAModal = ({ showQAModal, setShowQAModal, cid, cno }) => {
 
         setError(newError);
         if (!hasError) {
-            await updateQuestion(formData.question_no, formData.question_text, true); // Set question_show to true when starting
+            await updateQuestion(formData.question_no, formData.question_text, true);
             setLoading(true);
         }
     };
@@ -192,9 +208,9 @@ const QAModal = ({ showQAModal, setShowQAModal, cid, cno }) => {
         setLoading(false);
         setError({ question_no: "", question_text: "" });
         if (formData.question_no) {
-            updateQuestion(formData.question_no, formData.question_text, false); // Set question_show to false when closing modal
+            updateQuestion(formData.question_no, formData.question_text, false);
         }
-        stopListening(); // This will set question_show to false if stopListening is called
+        stopListening();
     };
 
     return (
@@ -211,7 +227,7 @@ const QAModal = ({ showQAModal, setShowQAModal, cid, cno }) => {
                             onChange={handleChange}
                             className={`w-full px-3 py-2 border rounded-lg ${error[field] ? 'border-red-500' : ''}`}
                             required
-                            disabled={loading} // Disable input when loading is true
+                            disabled={loading}
                         />
                         {error[field] && <p className="text-red-500 text-sm mt-1">{error[field]}</p>}
                     </div>
@@ -233,8 +249,16 @@ const QAModal = ({ showQAModal, setShowQAModal, cid, cno }) => {
                         {QAData.length > 0 ? (
                             <ul className="space-y-2 mb-4">
                                 {QAData.map(({ studentId, text }) => (
-                                    <li key={studentId} className="border-b p-2">
-                                        <strong>{studentId}:</strong> {text}
+                                    <li key={studentId} className="border-b p-2 flex justify-between items-center">
+                                        <span>
+                                            <strong>{studentId}:</strong> {text}
+                                        </span>
+                                        <button
+                                            onClick={() => deleteStudentAnswer(studentId)}
+                                            className="bg-red-500 text-white px-2 py-1 rounded-lg hover:bg-red-600 transition-colors"
+                                        >
+                                            Delete
+                                        </button>
                                     </li>
                                 ))}
                             </ul>
@@ -243,8 +267,16 @@ const QAModal = ({ showQAModal, setShowQAModal, cid, cno }) => {
                 ) : QAData.length > 0 ? (
                     <ul className="space-y-2">
                         {QAData.map(({ studentId, text }) => (
-                            <li key={studentId} className="border-b p-2">
-                                <strong>{studentId}:</strong> {text}
+                            <li key={studentId} className="border-b p-2 flex justify-between items-center">
+                                <span>
+                                    <strong>{studentId}:</strong> {text}
+                                </span>
+                                <button
+                                    onClick={() => deleteStudentAnswer(studentId)}
+                                    className="bg-red-500 text-white px-2 py-1 rounded-lg hover:bg-red-600 transition-colors"
+                                >
+                                    Delete
+                                </button>
                             </li>
                         ))}
                     </ul>
